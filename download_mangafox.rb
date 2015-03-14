@@ -4,6 +4,10 @@ require 'thread'
 
 require 'nokogiri'
 
+require 'pry'
+
+@log = Queue.new
+
 unless ARGV[0]
   puts "Usage : download_mangafox.rb <URL>"
   puts "Where <URL> is the full URL to the first page of the Manga"
@@ -27,7 +31,9 @@ def repeat_get(url)
   while flag && counter < 5
     begin
       flag = false
-      result = Net::HTTP.get(url)
+      response = Net::HTTP.get_response(url)
+      @log << response
+      result = response.body
     rescue => e
       flag = true
       counter += 1
@@ -65,13 +71,41 @@ number_of_pages = doc.css('div.r')[0].children[-4].children.last.content.strip.m
 
 puts "Starting to fetch #{number_of_pages} Pages"
 
+@file_sizes = Queue.new
+@download_log = Queue.new
+#@average = 0
+#@sizes = []
+@downloads = []
+
+average_keeper = Thread.new do
+  #average = 0
+  loop do
+    #if @file_sizes.size > 0 then
+    until @download_log.empty?
+      #@sizes << @file_sizes.pop
+      @downloads << @download_log.pop
+      #total = @sizes.size
+      #@average = @sizes.inject(0,:+).to_f./(total)
+    end
+    Thread.pass
+    sleep 0.5
+  end
+end
+
 threads = (1..number_of_pages).to_a.map do |num|
   Thread.new do
     page_url = base_url + num.to_s + '.html'
     picture_url = extract_picture_url page_url
     pic = download_picture picture_url
     filename = File.join(manga,volume,chapter,num.to_s + '.jpg')
-    File.binwrite filename, pic
+    file_size = File.binwrite(filename, pic)
+    #@file_sizes << file_size
+    @download_log << {
+      size: file_size,
+      page_url: page_url,
+      picture_url: picture_url,
+      #picture: pic
+    }
     pic
   end
 end
@@ -83,4 +117,31 @@ loop do
   break if finished == thread_count
   sleep 0.5
 end
+
+sleep 1
+average_keeper.exit
+
+sizes = @downloads.map{|d| d[:size]}
+average = sizes.inject(0,:+).to_f / sizes.size
+deviations = @downloads.map do |d|
+  dev = 100 - (100.0/average * d[:size])
+  d[:dev] = dev
+  if dev > 45 then
+    d[:repeat] = true
+  end
+  d
+end
+
+repeat_count = deviations.count{|d| d[:repeat]}
+
+if repeat_count > 0 then
+  puts "Re-Downloading #{repeat_count} Downloads because of suspiciously low file sizes"
+
+end
+
+
+
+
+binding.pry
+
 puts "\nDone !"
