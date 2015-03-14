@@ -11,7 +11,7 @@ require 'nokogiri'
 # Wenn ARGV[0] nicht existiert, weil kein Parameter angegeben wurde
 unless ARGV[0]
   # teilen wir das dem Benutzer mit
-  puts "Usage : download_mangagox.rb <URL>"
+  puts "Usage : download_mangafox.rb <URL>"
   puts "Where <URL> is the full URL to the first page of the Manga"
   # Und beenden das ganze, damit er es nochmal versuchen kann
   exit

@@ -5,7 +5,7 @@ require 'thread'
 require 'nokogiri'
 
 unless ARGV[0]
-  puts "Usage : download_mangagox.rb <URL>"
+  puts "Usage : download_mangafox.rb <URL>"
   puts "Where <URL> is the full URL to the first page of the Manga"
   exit
 end
