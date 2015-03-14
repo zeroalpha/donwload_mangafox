@@ -1,1 +1,11 @@
-sherlock
+# Ignore everything
+*
+
+# BUT
+!.gitignore
+!download_mangafox.rb
+!download_mangafox_comments.rb
+!chain_manga.rb
+
+!Gemfile
+!Gemfile.lock
