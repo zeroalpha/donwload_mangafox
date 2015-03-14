@@ -6,12 +6,17 @@ require 'nokogiri'
 
 require 'pry'
 
-@log = Queue.new
-
 unless ARGV[0]
-  puts "Usage : download_mangafox.rb <URL>"
+  puts "Usage : download_mangafox.rb <URL> [--all]"
   puts "Where <URL> is the full URL to the first page of the Manga"
+  puts "--all is optional and trigers downloading the whole manga in one go, instead of the selected chapter"
   exit
+end
+
+if ARGV[1] == '--all' then
+  ALL = true
+else
+  ALL = false
 end
 
 first_page_url = URI(ARGV[0])
@@ -24,6 +29,7 @@ chapter = path[4]
 
 base_url = first_page_url.path.gsub(/[^\/]*?\z/,"")
 base_url = first_page_url.scheme + '://' + first_page_url.host + base_url
+
 def repeat_get(url)
   url = URI(url)
   flag = true
@@ -32,7 +38,6 @@ def repeat_get(url)
     begin
       flag = false
       response = Net::HTTP.get_response(url)
-      @log << response
       result = response.body
     rescue => e
       flag = true
@@ -104,6 +109,7 @@ threads = (1..number_of_pages).to_a.map do |num|
       size: file_size,
       page_url: page_url,
       picture_url: picture_url,
+      file_name: filename
       #picture: pic
     }
     pic
@@ -132,16 +138,28 @@ deviations = @downloads.map do |d|
   d
 end
 
-repeat_count = deviations.count{|d| d[:repeat]}
-
+repeat_downloads = deviations.select{|d| d[:repeat]}
+repeat_count = repeat_downloads.size
 if repeat_count > 0 then
-  puts "Re-Downloading #{repeat_count} Downloads because of suspiciously low file sizes"
-
+  counter = 0
+  while repeat_count > 0 && counter < 5
+    puts "Re-Downloading #{repeat_count} Downloads because of suspiciously low file sizes"
+    repeat_downloads.map! do |d|
+      pic = repeat_get d[:picture_url]
+      d[:size] = File.binwrite d[:file_name],pic
+      dev = 100 - (100.0/average * d[:size])
+      d[:dev] = dev
+      if dev > 45 then
+        d[:repeat] = true
+      else
+        d[:repeat] = false
+      end
+      counter += 1
+      d
+    end
+    repeat_count = repeat_downloads.select{|d| d[:repeat]}.size
+  end  
+  #binding.pry
 end
-
-
-
-
-binding.pry
-
+#binding.pry
 puts "\nDone !"
