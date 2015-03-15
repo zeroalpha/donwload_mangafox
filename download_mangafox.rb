@@ -172,7 +172,7 @@ def download_chapter(url)
     # Wir versuchen wieder bis zu 5 mal mangafoxes jämmerlichkeit auszugleichen
     # Oder bis alle bilder in tragbarer qualität da sind 
     while repeat_count > 0 && counter < 5
-      puts "Re-Downloading #{repeat_count} Downloads because of suspiciously low file sizes"
+      puts "\nRe-Downloading #{repeat_count} Downloads because of suspiciously low file sizes"
       repeat_downloads.map! do |d|
         # Da wir die bild URL gespeichert haben, brauchen wir nur nochmal repeat_get aufzurufen
         pic = repeat_get d[:picture_url]
