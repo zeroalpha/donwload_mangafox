@@ -3,6 +3,7 @@
 
 # BUT
 !.gitignore
+!README.md
 !download_mangafox.rb
 !download_mangafox_comments.rb
 !chain_manga.rb
